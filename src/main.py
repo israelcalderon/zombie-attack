@@ -9,6 +9,7 @@ ZOMBIE = 1
 EMPTY = -1
 WIN = 30
 PARKED = 0
+TRIES = 0
 
 
 def seed_zombies_at_center(grid: np.array, _: int):
@@ -40,6 +41,21 @@ def get_infected(neighbors: list[int], density: float) -> bool:
     return np.random.random() >= zombie_probability
 
 
+def border_zombies(grid, size) -> int:
+    """
+    Count zombies that reach the border for the grid
+    """
+    counter = 0
+    for i in range(size):
+        if grid[i, 0] == ZOMBIE:
+            counter += 1
+
+        if grid[i, size - 1] == ZOMBIE:
+            counter += 1
+
+    return counter
+
+
 def zombies_win(grid, size) -> bool:
     """
     Zombies  win if they reach the left or right borders of the grid
@@ -50,21 +66,26 @@ def zombies_win(grid, size) -> bool:
     return False
 
 
-def simulate(frameNum, img, grid, size: int, density: float) -> Iterable:  # noqa: E501
+def simulate(frameNum, img, grid, size: int, density: float) -> Iterable:
     """
     If a HEALTY person has three Zombies neighbors it became Zombie
     """
     next_grid = grid.copy()
     global PARKED
+    global TRIES
 
     if zombies_win(grid, size):
         plt.text(50, 50, 'Zombies Win!', dict(size=30),
                  horizontalalignment='center', verticalalignment='center',
                  color='red')
+        plt.text(50, 60, f'Probabilidad: {border_zombies(grid, size)/TRIES}',
+                 dict(size=30),
+                 horizontalalignment='center', verticalalignment='center',
+                 color='red')
     elif PARKED >= WIN:
         plt.text(50, 50, 'Spread stopped', dict(size=30),
                  horizontalalignment='center', verticalalignment='center',
-                 color='green')
+                 color='blue')
     else:
         for i in range(size):
             for j in range(size):
@@ -85,11 +106,13 @@ def simulate(frameNum, img, grid, size: int, density: float) -> Iterable:  # noq
 
         if np.array_equal(grid, next_grid):
             PARKED += 1
+        else:
+            PARKED = 0  # we reset the counter if the grids are not equal
 
         grid[:] = next_grid[:]
         plt.title(f"Simulación: {frameNum}")
         plt.legend()
-
+        TRIES += 1
     return img,
 
 
